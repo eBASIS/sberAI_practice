@@ -1,0 +1,6 @@
+opencv-contrib-python
+scihub
+
+pillow
+pytesseract
+scidownl

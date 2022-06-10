@@ -1,22 +1,28 @@
 import csv
-from scihub import SciHub
-from scidownl import scihub_download
-# sh_handler = SciHub()
-# result = sh_handler.fetch('https://ieeexplore.ieee.org/document/9666083/')
+from sciHub_download import SciHub
 
-# if result:
-#   with open('output.pdf', 'wb+') as fd:
-#       fd.write(result.pdf)
-# auth_file = open("data/SSORC_CSMedPhys_10_20_authname_authid.csv", 'r', newline='')
-# paper_file = open("data/SSORC_CSMedPhys_10_20_paperid_papertitle_authornames.csv", 'r', newline='')
-# auth_iter = csv.reader(auth_file, delimiter=',', quotechar='|')
-# paper_iter = csv.reader(paper_file, delimiter=',', quotechar='|')
+class SH_parse:
+  def __init__(self):
+    self.sh_handler = SciHub(urls=["https://sci-hub.hkvisa.net"])
 
-# for i in range(10):
-#   #print("auth", auth_iter.__next__())
-#   #print(paper_file.readline())
-#   print(paper_iter.__next__())
-paper = "https://doi.org/10.1145/3375633"
-paper_type = "doi"
-out = "./paper/one_paper.pdf"
-scihub_download(paper, paper_type=paper_type, out=out)
+    self.auth_file = open("data/SSORC_CSMedPhys_10_20_authname_authid.csv", 'r', newline='')
+    self.paper_file = open("data/SSORC_CSMedPhys_10_20_paperid_papertitle_authornames.csv", 'r', newline='')
+    self.doi_file = open("data/SSORC_CSMedPhys_10_20_title_year_doi.csv", 'r', newline='')
+
+    self.auth_iter = csv.reader(self.auth_file, delimiter=',', quotechar='"')
+    self.paper_iter = csv.reader(self.paper_file, delimiter=',', quotechar='"')
+    self.doi_iter = csv.reader(self.doi_file, delimiter=',', quotechar='"')
+    # skip first line
+    self.auth_iter.__next__()
+    self.paper_iter.__next__()
+    self.doi_iter.__next__()
+
+  def next_pdf(self, save = False):
+    id, title, year, doi = self.doi_iter.__next__()
+    result = self.sh_handler.fetch(doi)
+    if 'err' in result:
+      return
+    else:
+      if save:
+        self.sh_handler._save(result['pdf'], f"pdf/{id}.pdf")
+      return result

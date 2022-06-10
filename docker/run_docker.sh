@@ -2,7 +2,7 @@
 
 xhost +local:docker || true
 
-ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/workspace
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
 echo "[!] your /workspace directory symlinked to: $ROOT_DIR" 
 

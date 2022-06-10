@@ -1,23 +1,16 @@
 # Docker scripts
-Here are some scripts that can make using this project easier.\
-The container has access to a folder:
-```
-/$USER/$HOME/ocr_matcher/
-```
-Install Docker:
+Here are some scripts that can make using this project easier.
+
+Install, buid and run Docker container:
 
 ```bash 
-# It's preferably to use -n flag that enables Nvidia drivers support.
-bash install_docker.sh -n # (Re)install Docker
-bash build_docker_cuda.sh -n # Build Docker container:
-bash run_docker.sh -n # Run Docker container
+bash install_docker.sh # (Re)install Docker
+bash build_docker.sh # Build Docker container:
+bash run_docker.sh # Run Docker container
 ```
+**Note:** this container has access to a folder: `workspace`
 
 You can access the running container:
 ```bash
 bash into_docker.sh
-```
-Also you can install python requirements without docker:
-```bash
-pip install -r requirements.txt
 ```

@@ -14,3 +14,8 @@ You can access the running container:
 ```bash
 bash into_docker.sh
 ```
+
+Also you can install python requirements without docker:
+ ```bash
+ pip install -r requirements.txt
+ ```

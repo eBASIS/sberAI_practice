@@ -41,9 +41,11 @@ ADD docker/requirements.txt /tmp/
 RUN python3 -m pip install -r /tmp/requirements.txt
 
 ## apt deps
-RUN apt update && apt install -y install \
+RUN apt update && apt install -y \
+                                        cmake \
                                         poppler-utils \
                                         tesseract-ocr \
-                                        libtesseract-dev
+                                        libtesseract-dev \
+                                        x11-apps
 
 WORKDIR /workspace

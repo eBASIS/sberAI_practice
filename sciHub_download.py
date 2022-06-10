@@ -44,7 +44,7 @@ class SciHub(object):
         else:
             self.available_base_url_list = urls
         self.base_url = self.available_base_url_list[0] + '/'
-        print(self.base_url)
+        print("Sci-Hub URL: " + self.base_url)
 
     def _get_available_scihub_urls(self):
         '''

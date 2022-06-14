@@ -3,7 +3,8 @@ from sciHub_download import SciHub
 
 class SH_parse:
   def __init__(self):
-    self.sh_handler = SciHub(urls=["https://sci-hub.hkvisa.net"])
+    self.sh_url = "https://sci-hub.hkvisa.net"
+    self.sh_handler = SciHub(urls=[self.sh_url])
 
     self.auth_file = open("data/SSORC_CSMedPhys_10_20_authname_authid.csv", 'r', newline='')
     self.paper_file = open("data/SSORC_CSMedPhys_10_20_paperid_papertitle_authornames.csv", 'r', newline='')
@@ -26,3 +27,14 @@ class SH_parse:
       if save:
         self.sh_handler._save(result['pdf'], f"pdf/{id}.pdf")
       return result
+
+  def next_pdf_url(self):
+    id, title, year, doi = self.doi_iter.__next__()
+    # return f"{self.sh_url}/{doi}"
+    return self.sh_handler._search_direct_url(doi)
+
+import scipdf
+if __name__ == "__main__":
+  # parser = SH_parse()
+  # uri = parser.next_pdf_url().split("#")
+  print(scipdf.parse_pdf("pdf/0.pdf"))

@@ -39,6 +39,7 @@ RUN apt update && apt install -y python3-pip
 RUN python3 -m pip install --upgrade pip
 ADD docker/requirements.txt /tmp/
 RUN python3 -m pip install -r /tmp/requirements.txt
+RUN python3 -m spacy download en_core_web_sm
 
 ## apt deps
 RUN apt update && apt install -y \
@@ -48,4 +49,6 @@ RUN apt update && apt install -y \
                                         libtesseract-dev \
                                         x11-apps
 
+## install GROBID
+## RUN apt update && apt install -y default-jre
 WORKDIR /workspace

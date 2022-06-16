@@ -72,9 +72,10 @@ class SciHub(object):
     def _change_base_url(self):
         if not self.available_base_url_list:
             raise Exception('Ran out of valid sci-hub urls')
-        del self.available_base_url_list[0]
-        self.base_url = self.available_base_url_list[0] + '/'
-        print("I'm changing to {}".format(self.available_base_url_list[0]))
+        # del self.available_base_url_list[0]
+        # self.base_url = self.available_base_url_list[0] + '/'
+        # print("I'm changing to {}".format(self.available_base_url_list[0]))
+        print(f"I'm changing to {self.base_url}")
 
     def search(self, query, limit=10, download=False):
         """
@@ -180,6 +181,7 @@ class SciHub(object):
             print('Failed to fetch pdf with identifier %s (resolved url %s) due to request exception.'
                        % (identifier, url))
             return {
+                'url' : url,
                 'err': 'Failed to fetch pdf with identifier %s (resolved url %s) due to request exception.'
                        % (identifier, url)
             }

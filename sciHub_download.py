@@ -147,6 +147,12 @@ class SciHub(object):
         """
 
         url = self._search_direct_url(identifier)
+        if url is None:
+            return {
+                'url' : url,
+                'err': 'Failed to fetch pdf with identifier %s (resolved url %s) due to request exception.'
+                       % (identifier, url)
+            }
         try:
 
             # verify=False is dangerous but sci-hub.io 

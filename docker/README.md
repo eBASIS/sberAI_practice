@@ -20,8 +20,12 @@ Also you can install python requirements without docker:
  pip install -r requirements.txt
  ```
 
-Also you should pull and run [Allenai SPV2](https://github.com/allenai/spv2) **docker** image:
+Also you should pull and run [Grobid](https://github.com/kermitt2/grobid) **docker** image:
 ```bash
-docker pull allenai/spv2:2.10
-docker run -p 8081:8081 allenai/spv2:2.10
+docker pull grobid/grobid:0.7.1
+docker run -t --rm --init -p 8070:8070 grobid/grobid:0.7.1
+```
+If you are able to use GPU, follow this:
+```bash
+docker run --rm --gpus '"device=1,2"' --init -p 8070:8070 grobid/grobid:0.7.1
 ```

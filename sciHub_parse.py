@@ -50,11 +50,12 @@ class SH_parse:
 results = []
 if __name__ == "__main__":
     parser = SH_parse()
-
     for i in range(50):
         result = parser.next_pdf(save=True)
-        print(result["id"])
-        if not result['binary'] is None:
+        if result['binary'] is None:
+            print("ERR: ", f"failed loading article with ID: {result['id']}, named: {result['title']}")
+        else:
+            print("LOG: ", f"loaded article with ID: {result['id']}, named: {result['title']}")
             article_dict, parsed_article = scipdf.parse_pdf_to_dict(f'pdf/{result["id"]}.pdf', fulltext=True)
             with open(f"grobid_out/{result['id']}.html", "w") as f:
                 for line in parsed_article:

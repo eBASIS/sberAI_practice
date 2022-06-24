@@ -1,11 +1,13 @@
+from email.headerregistry import Address
 import re
 import os
 from glob import glob
 import urllib
-import subprocess
+# import subprocess
+from git import Object
 import requests
 from bs4 import BeautifulSoup, NavigableString
-from tqdm import tqdm, tqdm_notebook
+# from tqdm import tqdm, tqdm_notebook
 
 
 GROBID_URL = "http://localhost:8070"  # or https://cloud.science-miner.com/grobid/ for cloud service
@@ -131,97 +133,136 @@ def parse_affiliations(article):
 
     - laboratory: corresponds to the research team or group, which the author belongs to (e.g. Joint Research Laboratory Nanomaterials) - the smallest scale of organization type.
     '''
-    def get_org_attrs(org):
-        ret_dict = {
-            "name" : org.text.strip(),
-            "type": "",
-            "key": ""
-        }
-        dict_keys = org.attrs.keys()
-        if "type" in dict_keys:
-            ret_dict["type"] = org.attrs["type"]
-        if "key" in dict_keys:
-            ret_dict["key"] = org.attrs["key"]
-        return ret_dict
+    class Author(Object):
+        class Affiliation(Object):
+            class Organization(Object):
+                def __init__(self, organization):
+                    self.org_attrs = organization.attrs.keys()
+                    # self.key = organization.attrs["key"] if "key" in self.org_attrs else ""
+                    self.type = organization.attrs["type"] if "type" in self.org_attrs else ""
+                    self.name = organization.text.strip()
 
-    def get_addr_attrs(addr):
-        ret_dict = {
-            "addrLine": "",
-            "postBox": "",
-            "postCode": "",
-            "settlement": "",
-            "country": ""
-        }
-        addrline = affiliation.find("addrline")
-        postbox = affiliation.find("postbox")
-        postcode = affiliation.find("postcode")
-        settlement = affiliation.find("settlement")
-        country = affiliation.find("country")
-        if not addrline is None:
-            ret_dict["addrLine"] = addrline.text.strip()
-        if not postbox is None:
-            ret_dict["postBox"] = postbox.text.strip()
-        if not postcode is None:
-            ret_dict["postCode"] = postcode.text.strip()
-        if not settlement is None:
-            ret_dict["settlement"] = settlement.text.strip()
-        if not country is None:
-            ret_dict["country"] = country.text.strip()
-        return ret_dict
+                def to_dict(self):
+                    return {
+                        "type": self.type,
+                        "name": self.name
+                    }
+
+            class Address(Object):
+                def __init__(self, address):
+                    if address is None:
+                        self.addrline = ""
+                        self.postbox = ""
+                        self.postcode = ""
+                        self.settlement = ""
+                        self.country = ""
+                        self.country_code = ""
+                        return
+                    addrline = address.find("addrline")
+                    self.addrline = addrline.text.strip() if not addrline is None else ""
+                    postbox = address.find("postbox")
+                    self.postbox = postbox.text.strip() if not postbox is None else ""
+                    postcode = address.find("postcode")
+                    self.postcode = postcode.text.strip() if not postcode is None else ""
+                    settlement = address.find("settlement")
+                    self.settlement = settlement.text.strip() if not settlement is None else ""
+                    country = address.find("country")
+                    self.country = country.text.strip() if not country is None else ""
+                    country_attrs = country.attrs.keys() if not country is None else ()
+                    self.country_code = country.attrs["key"] if "key" in country_attrs else ""
+
+                def to_dict(self):
+                    return  {
+                            "addrLine": self.addrline,
+                            "postBox": self.postbox,
+                            "postCode": self.postcode,
+                            "settlement": self.settlement,
+                            "country": self.country,
+                            "countryCode": self.country_code
+                        }
+
+            def __init__(self, affiliation):
+                self.aff_attrs = affiliation.attrs.keys()
+                self.key = affiliation.attrs["key"] if "key" in self.aff_attrs else ""
+                self.orgs = list(self.Organization(org).to_dict() for org in affiliation.findAll("orgname"))
+                self.address = self.Address(affiliation.find("address")).to_dict()
+
+            def to_dict(self):
+                return {
+                    "names": self.orgs,
+                    "key": self.key,
+                    "address": self.address
+                }
+
+        def __init__(self, author):
+            firstname = author.find("forename", {"type": "first"})
+            self.firstname = firstname.text.strip() if firstname is not None else ""
+            middlename = author.find("forename", {"type": "middle"})
+            self.middlename = middlename.text.strip() if middlename is not None else ""
+            lastname = author.find("surname")
+            self.lastname = lastname.text.strip() if lastname is not None else ""
+            email = author.find("email")
+            self.email = email.text.strip() if email is not None else ""
+            self.affiliations = list(self.Affiliation(affiliation).to_dict() for affiliation in author.findAll("affiliation"))
+        def to_dict(self):
+            return {
+                "person": {
+                    "first_name": self.firstname,
+                    "middle_name": self.middlename,
+                    "last_name": self.lastname,
+                    "email": self.email
+                },
+                "affiliations" : self.affiliations
+            }
+    author_list = article.find("sourcedesc").find("biblstruct").find("analytic").findAll("author")
+    authors = []
+    for author in author_list:
+        authors.append(Author(author).to_dict())
+    return authors
+
+def parse_acknowledgements(article):
+    ret = ""
+    acknow = article.find('div', attrs={'type': 'acknowledgement'})
+    if not acknow is None:
+        acknow_body = acknow.find('p')
+        if not acknow_body is None:
+            ret = acknow_body.text
+    return ret
+# def parse_date(article):
+#     """
+#     Parse date from a given BeautifulSoup of an article
+#     """
+#     pub_date = article.find("publicationstmt")
+#     year = pub_date.find("date")
+#     year = year.attrs.get("when") if year is not None else ""
+#     return year
 
 
-    affiliation_names = article.find("sourcedesc").findAll("affiliation")
-    affiliations = []
-    for affiliation in affiliation_names:
-        orgs = affiliation.findAll("orgname")
-        orgname = []
-        for org in orgs:
-            orgname.append(get_org_attrs(org))
-        addresses = affiliation.findAll("address")
-        address = []
-        for addr in addresses:
-            address.append(get_addr_attrs(addr))
-        affiliations.append({
-            "org": orgname,
-            "address": address
-        })
-    return affiliations
-
-def parse_date(article):
-    """
-    Parse date from a given BeautifulSoup of an article
-    """
-    pub_date = article.find("publicationstmt")
-    year = pub_date.find("date")
-    year = year.attrs.get("when") if year is not None else ""
-    return year
-
-
-def parse_abstract(article):
-    """
-    Parse abstract from a given BeautifulSoup of an article
-    """
-    div = article.find("abstract")
-    abstract = ""
-    for p in list(div.children):
-        if not isinstance(p, NavigableString) and len(list(p)) > 0:
-            abstract += " ".join(
-                [elem.text for elem in p if not isinstance(elem, NavigableString)]
-            )
-    return abstract
-
-
-def calculate_number_of_references(div):
-    """
-    For a given section, calculate number of references made in the section
-    """
-    n_publication_ref = len(
-        [ref for ref in div.find_all("ref") if ref.attrs.get("type") == "bibr"]
-    )
-    n_figure_ref = len(
-        [ref for ref in div.find_all("ref") if ref.attrs.get("type") == "figure"]
-    )
-    return {"n_publication_ref": n_publication_ref, "n_figure_ref": n_figure_ref}
+# def parse_abstract(article):
+#     """
+#     Parse abstract from a given BeautifulSoup of an article
+#     """
+#     div = article.find("abstract")
+#     abstract = ""
+#     for p in list(div.children):
+#         if not isinstance(p, NavigableString) and len(list(p)) > 0:
+#             abstract += " ".join(
+#                 [elem.text for elem in p if not isinstance(elem, NavigableString)]
+#             )
+#     return abstract
+# 
+# 
+# def calculate_number_of_references(div):
+#     """
+#     For a given section, calculate number of references made in the section
+#     """
+#     n_publication_ref = len(
+#         [ref for ref in div.find_all("ref") if ref.attrs.get("type") == "bibr"]
+#     )
+#     n_figure_ref = len(
+#         [ref for ref in div.find_all("ref") if ref.attrs.get("type") == "figure"]
+#     )
+#     return {"n_publication_ref": n_publication_ref, "n_figure_ref": n_figure_ref}
 
 
 def parse_sections(article, as_list: bool = False):
@@ -240,16 +281,16 @@ def parse_sections(article, as_list: bool = False):
         div_list = list(div.children)
         if len(div_list) == 0:
             heading = ""
-            text = ""
+            # text = ""
         elif len(div_list) == 1:
             if isinstance(div_list[0], NavigableString):
                 heading = str(div_list[0])
-                text = ""
+                # text = ""
             else:
                 heading = ""
-                text = div_list[0].text
+                # text = div_list[0].text
         else:
-            text = []
+            # text = []
             heading = div_list[0]
             if isinstance(heading, NavigableString):
                 heading = str(heading)
@@ -257,24 +298,26 @@ def parse_sections(article, as_list: bool = False):
             else:
                 heading = ""
                 p_all = list(div.children)
-            for p in p_all:
-                if p is not None:
-                    try:
-                        text.append(p.text)
-                    except:
-                        pass
-            if not as_list:
-                text = "\n".join(text)
-        if heading != "" or text != "":
-            ref_dict = calculate_number_of_references(div)
-            sections.append(
-                {
-                    "heading": heading,
-                    "text": text,
-                    "n_publication_ref": ref_dict["n_publication_ref"],
-                    "n_figure_ref": ref_dict["n_figure_ref"],
-                }
-            )
+            # for p in p_all:
+            #     if p is not None:
+            #         try:
+            #             text.append(p.text)
+            #         except:
+            #             pass
+            # if not as_list:
+            #     text = "\n".join(text)
+        # if heading != "" or text != "":
+        if heading != "":
+            # ref_dict = calculate_number_of_references(div)
+            # sections.append(
+            #     {
+            #         "heading": heading,
+            #         "text": text,
+            #         "n_publication_ref": ref_dict["n_publication_ref"],
+            #         "n_figure_ref": ref_dict["n_figure_ref"],
+            #     }
+            # )
+            sections.append(heading)
     return sections
 
 
@@ -317,32 +360,35 @@ def parse_references(article):
     return reference_list
 
 
-def parse_figure_caption(article):
-    """
-    Parse list of figures/tables from a given BeautifulSoup of an article
-    """
-    figures_list = []
-    figures = article.find_all("figure")
-    for figure in figures:
-        figure_type = figure.attrs.get("type") or ""
-        figure_id = figure.attrs["xml:id"] or ""
-        label = figure.find("label").text
-        if figure_type == "table":
-            caption = figure.find("figdesc").text
-            data = figure.table.text
-        else:
-            caption = figure.text
-            data = ""
-        figures_list.append(
-            {
-                "figure_label": label,
-                "figure_type": figure_type,
-                "figure_id": figure_id,
-                "figure_caption": caption,
-                "figure_data": data,
-            }
-        )
-    return figures_list
+# def parse_figure_caption(article):
+#     """
+#     Parse list of figures/tables from a given BeautifulSoup of an article
+#     """
+#     figures_list = []
+#     figures = article.find_all("figure")
+#     for figure in figures:
+#         figure_type = figure.attrs.get("type") or ""
+#         figure_id = figure.attrs["xml:id"] or ""
+#         label = figure.find("label").text
+#         if figure_type == "table":
+#             caption = figure.find("figdesc").text
+#             data = figure.table.text
+#         else:
+#             caption = figure.text
+#             data = ""
+#         figures_list.append(
+#             {
+#                 "figure_label": label,
+#                 "figure_type": figure_type,
+#                 "figure_id": figure_id,
+#                 "figure_caption": caption,
+#                 "figure_data": data,
+#             }
+#         )
+#     return figures_list
+
+
+
 
 
 def convert_article_soup_to_dict(article, as_list: bool = False):
@@ -381,16 +427,14 @@ def convert_article_soup_to_dict(article, as_list: bool = False):
         title = article.find("title", attrs={"type": "main"})
         title = title.text.strip() if title is not None else ""
         article_dict["authors"] = parse_authors(article)
-        article_dict["pub_date"] = parse_date(article)
+        # article_dict["pub_date"] = parse_date(article)
         article_dict["title"] = title
-        article_dict["abstract"] = parse_abstract(article)
+        # article_dict["abstract"] = parse_abstract(article)
+        article_dict["affiliations"] = parse_affiliations(article)
         article_dict["sections"] = parse_sections(article, as_list=as_list)
+        article_dict["acknowledgement"] = parse_acknowledgements(article)
         article_dict["references"] = parse_references(article)
         #article_dict["figures"] = parse_figure_caption(article)
-        article_dict["affiliations"] = parse_affiliations(article)
-        doi = article.find("idno", attrs={"type": "DOI"})
-        doi = doi.text if doi is not None else ""
-        article_dict["doi"] = doi
 
         return article_dict
     else:
@@ -427,51 +471,51 @@ def parse_pdf_to_dict(
     return article_dict, parsed_article
 
 
-def parse_figures(
-    pdf_folder: str,
-    jar_path: str = PDF_FIGURES_JAR_PATH,
-    resolution: int = 300,
-    output_folder: str = "figures",
-):
-    """
-    Parse figures from the given scientific PDF using pdffigures2
+# def parse_figures(
+#     pdf_folder: str,
+#     jar_path: str = PDF_FIGURES_JAR_PATH,
+#     resolution: int = 300,
+#     output_folder: str = "figures",
+# ):
+#     """
+#     Parse figures from the given scientific PDF using pdffigures2
 
-    Parameters
-    ==========
-    pdf_folder: str, path to a folder that contains PDF files. A folder must contains only PDF files
-    jar_path: str, default path to pdffigures2-assembly-0.0.12-SNAPSHOT.jar file
-    resolution: int, resolution of the output figures
-    output_folder: str, path to folder that we want to save parsed data (related to figures) and figures
+#     Parameters
+#     ==========
+#     pdf_folder: str, path to a folder that contains PDF files. A folder must contains only PDF files
+#     jar_path: str, default path to pdffigures2-assembly-0.0.12-SNAPSHOT.jar file
+#     resolution: int, resolution of the output figures
+#     output_folder: str, path to folder that we want to save parsed data (related to figures) and figures
 
-    Output
-    ======
-    folder: making a folder of output_folder/data and output_folder/figures of parsed data and figures relatively
-    """
-    data_path = os.path.join(output_folder, "data")
-    figure_path = os.path.join(output_folder, "figures")
+#     Output
+#     ======
+#     folder: making a folder of output_folder/data and output_folder/figures of parsed data and figures relatively
+#     """
+#     data_path = os.path.join(output_folder, "data")
+#     figure_path = os.path.join(output_folder, "figures")
 
-    if os.path.isdir(output_folder):
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
-        if not os.path.exists(figure_path):
-            os.mkdir(figure_path)
+#     if os.path.isdir(output_folder):
+#         if not os.path.exists(data_path):
+#             os.mkdir(data_path)
+#         if not os.path.exists(figure_path):
+#             os.mkdir(figure_path)
 
-        if os.path.isdir(data_path) and os.path.isdir(figure_path):
-            args = [
-                "java",
-                "-jar",
-                jar_path,
-                pdf_folder,
-                "-i",
-                str(resolution),
-                "-d",
-                os.path.join(os.path.abspath(data_path), ""),
-                "-m",
-                os.path.join(os.path.abspath(figure_path), ""),  # end path with "/"
-            ]
-            _ = subprocess.run(
-                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
-            )
-            print("Done parsing figures from PDFs!")
-    else:
-        print("output_folder have to be path to folder")
+#         if os.path.isdir(data_path) and os.path.isdir(figure_path):
+#             args = [
+#                 "java",
+#                 "-jar",
+#                 jar_path,
+#                 pdf_folder,
+#                 "-i",
+#                 str(resolution),
+#                 "-d",
+#                 os.path.join(os.path.abspath(data_path), ""),
+#                 "-m",
+#                 os.path.join(os.path.abspath(figure_path), ""),  # end path with "/"
+#             ]
+#             _ = subprocess.run(
+#                 args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
+#             )
+#             print("Done parsing figures from PDFs!")
+#     else:
+#         print("output_folder have to be path to folder")

@@ -19,9 +19,9 @@ The package was tested for the Ubuntu 20.04 LTS.
 - [sciHub_download.py](sciHub_download.py) – extended [library](https://github.com/zaytoun/scihub.py/blob/master/scihub/scihub.py) for parsing affiliations and acnowledgements
 - [sciHub_parse.py](sciHub_parse.py) – main script for iterating over dataset, loading articles and marking them 
 ## Acknowledgement <a name="ackn"></a>
-A Python parser for scientific PDF based on GROBID.  
-Grobid API wrapper based on *@titipata*'s [scipdf parser](https://github.com/titipata/scipdf_parser).  
-SciHub parser based on *@allenai*'s [science parse](https://github.com/allenai/science-parse).
+A Python parser for scientific PDF based on GROBID  
+Grobid API wrapper based on *@titipata*'s [scipdf parser](https://github.com/titipata/scipdf_parser)  
+SciHub parser based on *@allenai*'s [science parse](https://github.com/allenai/science-parse)
 ## Contact info <a name="contact"></a>
 - Maintainer: [Yaroslav](github.com/atokagzx)
 - Maintainer: [Tamara](github.com/Toma-Sin)

@@ -1,5 +1,4 @@
 __pychache__
-README.md
 ~*
 *~
 *.pyc
@@ -9,3 +8,5 @@ data/
 .DS_Store
 .vscode/
 pdf/
+grobid_out/
+recognized/

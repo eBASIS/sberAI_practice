@@ -2,6 +2,8 @@ import json
 import grobid_requests as scipdf
 import csv
 from sciHub_download import SciHub
+import random
+from time import sleep
 
 
 class SH_parse:
@@ -63,3 +65,4 @@ if __name__ == "__main__":
             #         f.write(str(line))
             with open(f"recognized/{result['id']}.json", "w") as f:
                 json.dump(article_dict, f, indent=2)
+        sleep(random.uniform(0.5, 3))

@@ -11,16 +11,13 @@ This document is dedicated to the desctiption and purpose of the **Paper Parse**
 
 ## General description
 
-First of all, we should say that there is a huge number of people that are writting the acrticles. But there's a huge problem of **TBD**
-
-And all of these works are holded in Scihubm which is **TBD**
-
+First of all, we should say that there is a huge number of people that are writting the acrticles. But there's a huge problem of **TBD**  
+And all of these works are holded in Scihubm which is **TBD**  
 That's why we have realize that the people are needing the tool to find and prepare the data with the potential to its deeper analysis using ML tools and even visualization.
 
 ## Proposed solution
 
-We were trying to design various approaches to resolve our problem. But we've found that the best way to di it would be to build a **set of scripts** that are written in Python and can do multiple tasks:
-
+We were trying to design various approaches to resolve our problem. But we've found that the best way to do it would be to build a **set of scripts** that are written in Python and can do multiple tasks:  
 - for downloading articles from SciHub
 - marking up articles and reoragnization of the outline structure (data preparation)
 - extracting the necessary sections: affiliations, acknowldgements
@@ -44,6 +41,28 @@ Grobid API wrapper based on *@titipata*'s [scipdf parser](https://github.com/tit
 
 SciHub parser based on *@allenai*'s [science parse](https://github.com/allenai/science-parse)
 
-## Contact info
+## Table of content
+-  [General description](#general-description)
+-  [Structure](#struct)
+-  [Acknoledgement](#ackn)
+-  [Closing remarks](#contact)
+
+## General description <a name="general-description"></a>
+A set of scripts for downloading articles from SciHub, marking up articles and extracting the necessary sections: affiliations, acknoldgements
+
+The package was tested for the Ubuntu 20.04 LTS.
+
+## Structure <a name="struct"></a>
+- [**docker**](docker) – docker launch scripts and python env requirements
+- [**data**](data) – directory for dataset
+- [grobid_requests.py](grobid_requests.py) – wrapper over **Grobid** API
+- [recognize.py](recognize.py) – example of using Tesseract
+- [sciHub_download.py](sciHub_download.py) – extended [library](https://github.com/zaytoun/scihub.py/blob/master/scihub/scihub.py) for parsing affiliations and acnoledgements
+- [sciHub_parse.py](sciHub_parse.py) – main script for iterating over dataset, loading articles and marking them 
+## Acknoledgement <a name="ackn"></a>
+A Python parser for scientific PDF based on GROBID.  
+Grobid API wrapper based on *@titipata*'s [scipdf parser](https://github.com/titipata/scipdf_parser).  
+SciHub parser based on *@allenai*'s [science parse](https://github.com/allenai/science-parse).
+## Contact info <a name="contact"></a>
 - Maintainer: [Yaroslav](github.com/atokagzx)
 - Maintainer: [Tamara](github.com/Toma-Sin)

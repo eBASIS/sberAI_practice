@@ -3,10 +3,11 @@
 This document is dedicated to the desctiption and purpose of the **Paper Parse** tool that is dedicated to the SciHub papers parsing, transofrming and analyzing of those with respect to the affilations and acknowledgement. 
 
 ## Table of content
--  [General description](#general-description)
--  [Structure](#structure)
--  [Acknowledgement](#acknowledgement)
--  [Closing remarks](#contact-info)
+- [General description](#general-description)
+- [Proposed Solution](#proposed-solution)
+- [Structure](#structure)
+- [Acknowledgement](#acknowledgement)
+- [Closing remarks](#contact-info)
 
 ## General description
 
@@ -42,6 +43,7 @@ Grobid API wrapper based on *@titipata*'s [scipdf parser](https://github.com/tit
 
 
 SciHub parser based on *@allenai*'s [science parse](https://github.com/allenai/science-parse)
+
 ## Contact info
 - Maintainer: [Yaroslav](github.com/atokagzx)
 - Maintainer: [Tamara](github.com/Toma-Sin)
